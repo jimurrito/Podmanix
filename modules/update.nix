@@ -10,7 +10,7 @@
   ...
 }:
 let
-  podxupdate-nixops = podxupdate-nixops;
+  podxupdate-nixops = config.services.podmanix-update;
 in
 with lib;
 {

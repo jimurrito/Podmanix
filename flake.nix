@@ -250,6 +250,7 @@
                 name: conf:
                 mkIf (conf.enable && conf.user != "root") {
                   enable = conf.enable;
+                  # user + group uses the default root:podmanix
                   # No need to init the 'home' podman config for root
                   initCMD = [
                     "runuser -l ${conf.user} -c 'podman info >> /dev/null && echo ${name} as ${conf.user} initialized'"
