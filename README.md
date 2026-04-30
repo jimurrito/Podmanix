@@ -1,11 +1,11 @@
 # Podmanix
 
-A NixOS module for declaratively managing rootless Podman containers via Docker Compose. Podmanix handles the full lifecycle of containerized services — initialization, automatic updates, firewall rules, and encrypted backups — all driven by a single `services.podmanix` configuration block.
+A NixOS module for declaratively managing rootless Podman containers via `podman-compose`. Podmanix handles the full lifecycle of containerized services — initialization, automatic updates, firewall rules, and encrypted backups — all driven by a single `services.podmanix` configuration block.
 
 ## Features
 
-- **Rootless containers** — each service runs as its own unprivileged system user
-- **Docker Compose support** — bring your existing `compose.yml` files
+- **Rootless containers** — each service runs as its own unprivileged system user; services can also be run as root by setting `user = "root"`
+- **`podman-compose` support** — bring your existing `compose.yml` files; Podmanix uses `podman-compose` (not Docker Compose) to manage container stacks, though the two are largely compatible
 - **Automatic updates** — scheduled image pulls and service restarts via systemd timers
 - **Encrypted backups** — integrated with [Burenix](https://forgejo.immerhouse.com/jimurrito/burenix) for scheduled, encrypted, compressed backups
 - **Firewall management** — per-service TCP/UDP port rules
@@ -127,7 +127,7 @@ Each service gets a dedicated system user with:
 - Subuid/subgid range `100000–165535` (required for rootless Podman)
 - Lingering enabled so the user's systemd session persists after logout
 
-Services configured with `user = "root"` skip user creation and init entirely.
+Services configured with `user = "root"` skip user creation and rootless init entirely — the service runs with full root privileges. This is not recommended unless required.
 
 ## License
 
