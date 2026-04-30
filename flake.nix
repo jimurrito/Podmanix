@@ -164,32 +164,33 @@
             # Creates the rootless user and podmanix group that will run the podman containers
             users = {
               groups.podmanix = { };
-              users =
-                let
-                  guid = [
-                    {
-                      startUid = 100000;
-                      count = 65536;
-                    }
-                  ];
-                in
-                mkMerge (
-                  mapAttrsToList (
-                    name: conf:
-                    mkIf (conf.enable && conf.user != "root") {
-                      ${conf.user} = {
-                        enable = conf.enable;
-                        isNormalUser = true;
-                        group = conf.group;
-                        linger = true;
-                        createHome = true;
-                        home = "/var/podmanix/${conf.user}";
-                        subUidRanges = guid;
-                        subGidRanges = guid;
-                      };
-                    }
-                  ) podmanix-nixops.services
-                );
+              users = mkMerge (
+                mapAttrsToList (
+                  name: conf:
+                  mkIf (conf.enable && conf.user != "root") {
+                    ${conf.user} = {
+                      enable = conf.enable;
+                      isNormalUser = true;
+                      group = conf.group;
+                      linger = true;
+                      createHome = true;
+                      home = "/var/podmanix/${conf.user}";
+                      subUidRanges = [
+                        {
+                          startUid = 100000;
+                          count = 65536;
+                        }
+                      ];
+                      subGidRanges = [
+                        {
+                          startGid = 100000;
+                          count = 65536;
+                        }
+                      ];
+                    };
+                  }
+                ) podmanix-nixops.services
+              );
             };
             #
             # Networking firewall rules
