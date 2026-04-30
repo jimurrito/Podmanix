@@ -5,9 +5,9 @@ A NixOS module for declaratively managing rootless Podman containers via `podman
 ## Features
 
 - **Rootless containers** — each service runs as its own unprivileged system user; services can also be run as root by setting `user = "root"`
-- **`podman-compose` support** — bring your existing `compose.yml` files; Podmanix uses `podman-compose` (not Docker Compose) to manage container stacks, though the two are largely compatible
+- **`podman-compose` support** — bring your existing `compose.yml` files; Podmanix uses `podman-compose` to manage container stacks
 - **Automatic updates** — scheduled image pulls and service restarts via systemd timers
-- **Encrypted backups** — integrated with [Burenix](https://forgejo.immerhouse.com/jimurrito/burenix) for scheduled, encrypted, compressed backups
+- **Encrypted backups** — integrated with [Burenix](https://github.com/jimurrito/burenix) for scheduled, encrypted, compressed backups
 - **Firewall management** — per-service TCP/UDP port rules
 - **Declarative** — fully defined in your NixOS config; reproducible across machines
 
