@@ -3,10 +3,17 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     burenix.url = "git+https://forgejo.immerhouse.com/jimurrito/burenix";
+    test-vm.url = "github:jimurrito/nixos-test-vm";
   };
   #
   outputs =
-    { ... }:
+    {
+      self,
+      nixpkgs,
+      test-vm,
+      burenix,
+      ...
+    }:
     {
       #
       nixosModules.default =
@@ -324,5 +331,39 @@
             #
           };
         };
+      #
+      #
+      #
+      #
+      # TestVM
+      nixosConfigurations =
+        let
+          testConfig =
+            { ... }:
+            {
+              services.podmanix = {
+                enable = true;
+                services.myapp = {
+                  enable = true;
+                  composeFile = ./test.yml;
+                };
+              };
+            };
+        in
+        {
+          test-vm = nixpkgs.lib.nixosSystem {
+            system = "x86_64-linux";
+            modules = [
+              test-vm.baselineConfig
+              # test config
+              self.nixosModules.default
+              burenix.nixosModules.default
+              testConfig
+            ];
+          };
+        };
+      #
+      #
+      #
     };
 }

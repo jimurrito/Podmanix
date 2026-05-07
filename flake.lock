@@ -1,0 +1,132 @@
+{
+  "nodes": {
+    "burenix": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "test-vm": "test-vm"
+      },
+      "locked": {
+        "lastModified": 1778122836,
+        "narHash": "sha256-EqGMGNIymJyljDsSCZyYIYQlenqTtmwCkKb8+T0Lnds=",
+        "ref": "refs/heads/main",
+        "rev": "619b8c50d3e46f1e2927959da7d0767c9cac004c",
+        "revCount": 22,
+        "type": "git",
+        "url": "https://forgejo.immerhouse.com/jimurrito/burenix"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://forgejo.immerhouse.com/jimurrito/burenix"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1778003029,
+        "narHash": "sha256-q/nkKLDtHIyLjZpKhWk3cSK5IYsFqtMd6UtXF3ddjgA=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "0c88e1f2bdb93d5999019e99cb0e61e1fe2af4c5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-25.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1778003029,
+        "narHash": "sha256-q/nkKLDtHIyLjZpKhWk3cSK5IYsFqtMd6UtXF3ddjgA=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "0c88e1f2bdb93d5999019e99cb0e61e1fe2af4c5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-25.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
+      "locked": {
+        "lastModified": 1777954456,
+        "narHash": "sha256-hGdgeU2Nk87RAuZyYjyDjFL6LK7dAZN5RE9+hrDTkDU=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "549bd84d6279f9852cae6225e372cc67fb91a4c1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_4": {
+      "locked": {
+        "lastModified": 1778003029,
+        "narHash": "sha256-q/nkKLDtHIyLjZpKhWk3cSK5IYsFqtMd6UtXF3ddjgA=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "0c88e1f2bdb93d5999019e99cb0e61e1fe2af4c5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-25.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "burenix": "burenix",
+        "nixpkgs": "nixpkgs_3",
+        "test-vm": "test-vm_2"
+      }
+    },
+    "test-vm": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1778109356,
+        "narHash": "sha256-J9QzDzjbF2WPjrX3CWX99EB8uUO9nK1uPT5VPP+NLx8=",
+        "owner": "jimurrito",
+        "repo": "nixos-test-vm",
+        "rev": "8b8a0870f059624601f1e4a9becf10025ceb77dc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jimurrito",
+        "repo": "nixos-test-vm",
+        "type": "github"
+      }
+    },
+    "test-vm_2": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_4"
+      },
+      "locked": {
+        "lastModified": 1778110260,
+        "narHash": "sha256-ueAXoeqagwLOU84GYh/fiNN+tnU6Gk21AjPPgAx81NQ=",
+        "owner": "jimurrito",
+        "repo": "nixos-test-vm",
+        "rev": "39b5ba13f0f2b6c3a1c946d1c952b92e2fb34ad4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jimurrito",
+        "repo": "nixos-test-vm",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
