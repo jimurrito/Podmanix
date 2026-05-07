@@ -1,7 +1,7 @@
 {
   description = "A non-pure Rootless podman tools for Nixos";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     burenix.url = "git+https://forgejo.immerhouse.com/jimurrito/burenix";
     test-vm.url = "github:jimurrito/nixos-test-vm";
   };
