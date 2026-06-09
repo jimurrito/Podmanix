@@ -1,25 +1,68 @@
 # Podmanix
 
+![Nix](https://img.shields.io/badge/language-Nix-5277C3?logo=nixos)
+![License](https://img.shields.io/badge/license-GPL%20v3-blue)
+
 A NixOS module for declaratively managing rootless Podman containers via `podman-compose`. Podmanix handles the full lifecycle of containerized services — initialization, automatic updates, firewall rules, and encrypted backups — all driven by a single `services.podmanix` configuration block.
 
-## Features
+The best part is... you can bring your existing `yaml` files.
 
-- **Rootless containers** — each service runs as its own unprivileged system user; services can also be run as root by setting `user = "root"`
-- **`podman-compose` support** — bring your existing `compose.yml` files; Podmanix uses `podman-compose` to manage container stacks
-- **Automatic updates** — scheduled image pulls and service restarts via systemd timers
-- **Encrypted backups** — integrated with [Burenix](https://github.com/jimurrito/burenix) for scheduled, encrypted, compressed backups
-- **Firewall management** — per-service TCP/UDP port rules
-- **Declarative** — fully defined in your NixOS config; reproducible across machines
+## Table of Contents
+
+- [Requirements](#requirements)
+- [Usage](#usage)
+  - [Pseudo-code Example](#pseudo-code-example)
+  - [Real Example](#real-example)
+  - [Flake Setup](#flake-setup)
+- [Options Reference](#options-reference)
+  - [Top-level](#top-level)
+  - [services.\<name\>](#servicesnname)
+  - [updates](#updates)
+  - [backups](#backups)
+- [How It Works](#how-it-works)
+- [User & Directory Layout](#user--directory-layout)
+- [License](#license)
+
+## Requirements
+
+- NixOS with flakes enabled
 
 ## Usage
 
-Add Podmanix to your flake inputs:
+### Pseudo-code Example
 
 ```nix
-inputs.podmanix.url = "git+https://forgejo.immerhouse.com/jimurrito/podmanix";
+{ inputs, ... }:
+{
+  imports = [ inputs.podmanix.nixosModules.default ];
+
+  services.podmanix = {
+    enable = true;
+
+    services.<service-name> = {
+      enable      = true;
+      composeFile = <path-to-compose-yml>;
+
+      firewall.allowedTCPPorts = [ <port> ];
+
+      backups = {
+        enable    = true;
+        dataPaths = [ "<path-to-data>" ];
+      };
+    };
+
+    updates.enable = true;
+
+    backups = {
+      enable     = true;
+      keyPath    = "<path-to-encryption-key>";
+      targetDirs = [ "<path-to-backup-destination>" ];
+    };
+  };
+}
 ```
 
-Import the module and configure your services:
+### Real Example
 
 ```nix
 { inputs, ... }:
@@ -54,17 +97,36 @@ Import the module and configure your services:
 
 Apply with `nixos-rebuild switch`.
 
-## How It Works
+### Flake Setup
 
-1. **Rebuild** — NixOS creates system users, copies compose files to `/etc/podmanix/compose/`, and generates systemd units for each service.
-2. **Init** — Before each service starts, `podman info` is run as the service user to bootstrap the rootless Podman environment.
-3. **Run** — Each service runs `podman-compose up` and restarts automatically on failure.
-4. **Update** — A systemd timer pulls new images and restarts the service on the configured schedule, then prunes unused resources.
-5. **Backup** — A Burenix-managed timer stops the service, compresses and encrypts the configured data paths, transfers them to the target destination(s), then restarts the service.
+Add Podmanix to your flake inputs and wire up nixpkgs:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+
+    podmanix = {
+      url = "git+https://forgejo.immerhouse.com/jimurrito/podmanix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs = { nixpkgs, podmanix, ... }: {
+    nixosConfigurations.my-host = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        podmanix.nixosModules.default
+        ./configuration.nix
+      ];
+    };
+  };
+}
+```
 
 ## Options Reference
 
-All configuration lives under `services.podmanix`.
+All options live under `services.podmanix`.
 
 ### Top-level
 
@@ -74,7 +136,7 @@ All configuration lives under `services.podmanix`.
 
 ---
 
-### `services.podmanix.services.<name>`
+### `services.<name>`
 
 One entry per containerized service, keyed by name.
 
@@ -94,7 +156,7 @@ One entry per containerized service, keyed by name.
 
 ---
 
-### `services.podmanix.updates`
+### `updates`
 
 Controls automatic image updates across all services.
 
@@ -105,7 +167,7 @@ Controls automatic image updates across all services.
 
 ---
 
-### `services.podmanix.backups`
+### `backups`
 
 Global backup settings shared across all per-service backup jobs.
 
@@ -116,13 +178,22 @@ Global backup settings shared across all per-service backup jobs.
 | `enable` | bool | `false` | Enable the backup system |
 | `keyPath` | string | `"/root/backup-key"` | Path to the encryption key |
 | `targetDirs` | list of string | `[]` | Destination directories for backup archives |
-| `rolloverIntervalDays` | number | `14` | Number of days before old backups are pruned |
+| `rolloverIntervalDays` | number | `14` | Days before old backups are pruned |
 | `useSSH` | bool | `false` | Transfer backups via SCP |
 | `usePigz` | bool | `false` | Use `pigz` (multi-threaded gzip) for compression |
+
+## How It Works
+
+1. **Rebuild** — NixOS creates system users, copies compose files to `/etc/podmanix/compose/`, and generates systemd units for each service.
+2. **Init** — Before each service starts, `podman info` is run as the service user to bootstrap the rootless Podman environment.
+3. **Run** — Each service runs `podman-compose up` and restarts automatically on failure.
+4. **Update** — A systemd timer pulls new images and restarts the service on the configured schedule, then prunes unused resources.
+5. **Backup** — A [Burenix](https://github.com/jimurrito/burenix)-managed timer stops the service, compresses and encrypts the configured data paths, transfers them to the target destination(s), then restarts the service.
 
 ## User & Directory Layout
 
 Each service gets a dedicated system user with:
+
 - Home directory at `/var/podmanix/<user>/`
 - Subuid/subgid range `100000–165535` (required for rootless Podman)
 - Lingering enabled so the user's systemd session persists after logout

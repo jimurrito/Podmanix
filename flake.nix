@@ -1,9 +1,12 @@
 {
   description = "A non-pure Rootless podman tools for Nixos";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    test-vm = {
+      url = "github:jimurrito/nixos-test-vm";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     burenix.url = "git+https://forgejo.immerhouse.com/jimurrito/burenix";
-    test-vm.url = "github:jimurrito/nixos-test-vm";
   };
   #
   outputs =
@@ -29,8 +32,9 @@
         with lib;
         {
           #
-          # Imports supplimentary flakes
+          # Imports supplimentary flakes + Burenix
           imports = [
+            burenix.nixosModules.default
             ./modules/init.nix
             ./modules/update.nix
           ];
@@ -169,6 +173,7 @@
             };
             #
             # Creates the rootless user and podmanix group that will run the podman containers
+            # As of now, the user created per podman config must be a normaluser due to how podman operates
             users = {
               groups.podmanix = { };
               users = mkMerge (
@@ -343,6 +348,7 @@
             {
               services.podmanix = {
                 enable = true;
+                backups.enable = true;
                 services.myapp = {
                   enable = true;
                   composeFile = ./test.yml;
@@ -357,7 +363,6 @@
               test-vm.baselineConfig
               # test config
               self.nixosModules.default
-              burenix.nixosModules.default
               testConfig
             ];
           };

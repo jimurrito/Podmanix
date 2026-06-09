@@ -6,11 +6,11 @@
         "test-vm": "test-vm"
       },
       "locked": {
-        "lastModified": 1778122836,
-        "narHash": "sha256-EqGMGNIymJyljDsSCZyYIYQlenqTtmwCkKb8+T0Lnds=",
+        "lastModified": 1778211057,
+        "narHash": "sha256-+4bV3zmP8A8zN8SORzn5FYizqEO1x58eUAQApNNkJC8=",
         "ref": "refs/heads/main",
-        "rev": "619b8c50d3e46f1e2927959da7d0767c9cac004c",
-        "revCount": 22,
+        "rev": "20750754a45dd3c12e5aa20891e407bd47a069c3",
+        "revCount": 24,
         "type": "git",
         "url": "https://forgejo.immerhouse.com/jimurrito/burenix"
       },
@@ -53,32 +53,16 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1777954456,
-        "narHash": "sha256-hGdgeU2Nk87RAuZyYjyDjFL6LK7dAZN5RE9+hrDTkDU=",
+        "lastModified": 1780902259,
+        "narHash": "sha256-q8yYEC5f1mFlQO9RGna4LTc9QrcvWunX6FYp83munkQ=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "549bd84d6279f9852cae6225e372cc67fb91a4c1",
+        "rev": "bd0ff2d3eac24699c3664d5966b9ef36f388e2ca",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_4": {
-      "locked": {
-        "lastModified": 1778003029,
-        "narHash": "sha256-q/nkKLDtHIyLjZpKhWk3cSK5IYsFqtMd6UtXF3ddjgA=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "0c88e1f2bdb93d5999019e99cb0e61e1fe2af4c5",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-25.11",
+        "ref": "nixos-26.05",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -110,14 +94,16 @@
     },
     "test-vm_2": {
       "inputs": {
-        "nixpkgs": "nixpkgs_4"
+        "nixpkgs": [
+          "nixpkgs"
+        ]
       },
       "locked": {
-        "lastModified": 1778110260,
-        "narHash": "sha256-ueAXoeqagwLOU84GYh/fiNN+tnU6Gk21AjPPgAx81NQ=",
+        "lastModified": 1780721646,
+        "narHash": "sha256-6Zb4mnaJ+i3URytB89VAozQA6kTe2mb9lVw1UHFmy/I=",
         "owner": "jimurrito",
         "repo": "nixos-test-vm",
-        "rev": "39b5ba13f0f2b6c3a1c946d1c952b92e2fb34ad4",
+        "rev": "66ffacec9728f4043c93c5b04128b40cdb0a324d",
         "type": "github"
       },
       "original": {
