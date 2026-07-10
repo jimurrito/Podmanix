@@ -8,9 +8,11 @@ with lib;
 let
   podmanix-nixops = config.services.podmanix;
   srvs = podmanix-nixops.services;
+  #
   doUpdates = podmanix-nixops.updates.enable;
   updateTime = podmanix-nixops.updates.updateTime;
   #
+  rtBackup = podmanix-nixops.backups;
   #
   srvMapper =
     logic: (mkMerge (mapAttrsToList (sName: sConf: (mkIf sConf.enable (logic sName sConf))) srvs));
@@ -156,7 +158,47 @@ in
       }
     );
     #
-    #
+    # Backups via Burenix
+    # Due to permissions, most instances will run as root.
+    services.burenix = {
+      enable = rtBackup.enable;
+      keyPath = rtBackup.keyPath;
+      backups = srvMapper (
+        name: conf:
+        let
+          srvBackup = conf.backups;
+          rtIdSwitch = id: (if srvBackup.useServiceUser then id else "root");
+        in
+        {
+          #
+          # Backup config for the compose service
+          "podmanix-${name}" = {
+            enable = conf.enable;
+            user = rtIdSwitch conf.user;
+            group = rtIdSwitch conf.group;
+            sourceDirs = srvBackup.dataPaths;
+            tempDir = srvBackup.tempDir;
+            targetDirs = rtBackup.targetDirs;
+            rolloverIntervalDays = rtBackup.rolloverIntervalDays;
+            backupTime = srvBackup.backupTime;
+            useSSH = rtBackup.useSSH;
+            usePigz = rtBackup.usePigz;
+            #
+            # TODO: see if we can remove the script dependency
+            preRunScript = {
+              enable = true;
+              source = ../scripts/pre.bash;
+              arguments = "${name}";
+            };
+            postRunScript = {
+              enable = true;
+              source = ../scripts/post.bash;
+              arguments = "${name}";
+            };
+          };
+        }
+      );
+    };
     #
   };
 }
