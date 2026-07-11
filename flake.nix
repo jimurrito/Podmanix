@@ -39,11 +39,21 @@
             {
               services.podmanix = {
                 enable = true;
-                backups.enable = true;
+                backups = {
+                  enable = true;
+                  keyPath = "/etc/hostname";
+                  targetDirs = [
+                    "/backups"
+                  ];
+                };
                 updates.enable = true;
                 services.myapp = {
                   enable = true;
                   composeFile = ./test.yml;
+                  backups = {
+                    enable = true;
+                    dataPaths = ["/etc/fstab"]; # testing
+                  };
                 };
               };
             }

@@ -92,6 +92,12 @@ in
         podman = getExe pkgs.podman;
         podmanCompose = getExe pkgs.podman-compose;
         userHome = config.users.users.${conf.user}.home;
+        serviceDeps = [
+          # allows acceses to the wrappers for new*idmap
+          "/run/wrappers"
+          pkgs.podman
+          pkgs.podman-compose
+        ];
       in
       {
         #
@@ -101,12 +107,7 @@ in
           description = "Podman Compose Service (${name} as ${conf.user}:${conf.group})";
           after = [ "network.target" ];
           wantedBy = [ "multi-user.target" ];
-          path = [
-            # allows acceses to the wrappers for new*idmap
-            "/run/wrappers"
-            pkgs.podman
-            pkgs.podman-compose
-          ];
+          path = serviceDeps;
           serviceConfig = {
             User = conf.user;
             Group = conf.group;
@@ -128,12 +129,7 @@ in
           enable = true;
           description = "Podmanix Update Service for [${name}]";
           restartIfChanged = true;
-          path = [
-            # allows acceses to the wrappers for new*idmap
-            "/run/wrappers"
-            pkgs.podman
-            pkgs.podman-compose
-          ];
+          path = serviceDeps;
           serviceConfig = {
             Type = "oneshot";
             User = conf.user;
@@ -172,7 +168,7 @@ in
         {
           #
           # Backup config for the compose service
-          "podmanix-${name}" = {
+          "podmanix-${name}" = mkIf srvBackup.enable {
             enable = conf.enable;
             user = rtIdSwitch conf.user;
             group = rtIdSwitch conf.group;
