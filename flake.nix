@@ -41,9 +41,13 @@
                 enable = true;
                 backups = {
                   enable = true;
-                  keyPath = "/etc/hostname";
+                  encryption = {
+                    enable = true;
+                    keyPath = "/etc/hostname";
+                  };
                   targetDirs = [
-                    "/backups"
+                    "/var/backups"
+                    "/opt/backups"
                   ];
                 };
                 updates.enable = true;
@@ -52,7 +56,7 @@
                   composeFile = ./test.yml;
                   backups = {
                     enable = true;
-                    dataPaths = ["/etc/fstab"]; # testing
+                    dataPaths = [ "/etc/fstab" ]; # testing
                   };
                 };
               };

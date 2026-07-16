@@ -12,8 +12,6 @@ let
   doUpdates = podmanix-nixops.updates.enable;
   updateTime = podmanix-nixops.updates.updateTime;
   #
-  rtBackup = podmanix-nixops.backups;
-  #
   srvMapper =
     logic: (mkMerge (mapAttrsToList (sName: sConf: (mkIf sConf.enable (logic sName sConf))) srvs));
   #
@@ -40,6 +38,7 @@ in
           ${conf.user} = {
             enable = conf.enable;
             group = conf.group;
+            extraGroups = conf.extraGroups;
             isSystemUser = true;
             linger = true;
             createHome = true;
@@ -140,7 +139,6 @@ in
             ExecStartPost = "${podman} system prune -f";
           };
         };
-        #
         # Update service timer
         timers."podmanix-update-${name}" = mkIf doUpdates {
           enable = true;
@@ -156,39 +154,71 @@ in
     #
     # Backups via Burenix
     # Due to permissions, most instances will run as root.
-    services.burenix = {
-      enable = rtBackup.enable;
-      keyPath = rtBackup.keyPath;
+    services.burenix = mkIf (podmanix-nixops.backups.enable) {
+      enable = true;
       backups = srvMapper (
         name: conf:
         let
+          # config in services.podmanix.backups
+          rtBackupConf = podmanix-nixops.backups;
+          # config in services.podmanix.services.*.backups
           srvBackup = conf.backups;
-          rtIdSwitch = id: (if srvBackup.useServiceUser then id else "root");
+          # root backups override
+          srvBackupOverride = srvBackup.overrides;
+          useOverride = srvBackupOverride.enable;
+          #
+          # should the backup config use the parent config or use override
+          buConfig = if useOverride then srvBackupOverride else rtBackupConf;
+          wUser = if useOverride then srvBackupOverride.user else conf.user;
+          wGroup = if useOverride then srvBackupOverride.group else conf.group;
+          #
+          # script generator
+          startScript = op: name: ''
+            #!/usr/bin/env bash
+            echo "Performing [${op}] on Podman Containers in [${name}.service]"
+            systemctl ${op} "${name}.service"
+            echo "[${op}] complete for [${name}.service]"
+          '';
+          #
+          #
+          preStart = pkgs.runCommand "prestart.bash" { } ''
+            echo -e "${startScript "stop" name}" > $out
+            chmod 0555 $out
+          '';
+          postStart = pkgs.runCommand "poststart.bash" { } ''
+            echo -e "${startScript "start" name}" > $out
+            chmod 0555 $out
+          '';
+          #
         in
         {
           #
           # Backup config for the compose service
-          "podmanix-${name}" = mkIf srvBackup.enable {
-            enable = conf.enable;
-            user = rtIdSwitch conf.user;
-            group = rtIdSwitch conf.group;
+          # Enable if backups on the service are enabled
+          "podmx-${name}" = mkIf srvBackup.enable {
+            enable = srvBackup.enable;
             sourceDirs = srvBackup.dataPaths;
             tempDir = srvBackup.tempDir;
-            targetDirs = rtBackup.targetDirs;
-            rolloverIntervalDays = rtBackup.rolloverIntervalDays;
-            backupTime = srvBackup.backupTime;
-            useSSH = rtBackup.useSSH;
-            usePigz = rtBackup.usePigz;
+            # uses either service user/group or override
+            user = wUser;
+            group = wGroup;
+            # uses override/root backup config
+            targetDirs = buConfig.targetDirs;
+            rollover = buConfig.rollover;
+            backupTime = buConfig.backupTime;
+            useSSH = buConfig.useSSH;
+            usePigz = buConfig.usePigz;
+            encryption = buConfig.encryption;
+            checksum = buConfig.checksum;
             #
-            # TODO: see if we can remove the script dependency
             preRunScript = {
               enable = true;
-              source = ../scripts/pre.bash;
+              file = preStart;
               arguments = "${name}";
             };
             postRunScript = {
               enable = true;
-              source = ../scripts/post.bash;
+              file = postStart;
               arguments = "${name}";
             };
           };
