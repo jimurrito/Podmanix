@@ -3,3 +3,4 @@ services:
     image: docker.io/nginx:latest
     ports:
       - "8080:80"
+
