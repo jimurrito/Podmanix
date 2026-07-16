@@ -6,11 +6,11 @@
         "test-vm": "test-vm"
       },
       "locked": {
-        "lastModified": 1784172650,
-        "narHash": "sha256-WdlZlz02Io3D/D+J3Aup+QzkEhQKO7StjUZUfXk3pPE=",
+        "lastModified": 1784182222,
+        "narHash": "sha256-r2Ri8A2quRilV9fgx63R57SDSnLoJ/jrpcU9aB8zw3s=",
         "ref": "refs/heads/main",
-        "rev": "3667e35f69535d9737f215abe60e9a08aa56aceb",
-        "revCount": 35,
+        "rev": "54c5a2fd13ced194380d833cb447a30a961746ae",
+        "revCount": 37,
         "type": "git",
         "url": "https://forgejo.immerhouse.com/jimurrito/burenix"
       },

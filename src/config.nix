@@ -214,12 +214,12 @@ in
             preRunScript = {
               enable = true;
               file = preStart;
-              arguments = "${name}";
+              exitOnFail = true;
             };
             postRunScript = {
               enable = true;
               file = postStart;
-              arguments = "${name}";
+              exitOnFail = true;
             };
           };
         }

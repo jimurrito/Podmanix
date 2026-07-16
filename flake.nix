@@ -37,7 +37,10 @@
             self.nixosModules.default
             # test config
             {
-              users.users.user.extraGroups = [ "burenix" "podmanix" ];
+              users.users.user.extraGroups = [
+                "burenix"
+                "podmanix"
+              ];
               services.podmanix = {
                 enable = true;
                 backups = {
