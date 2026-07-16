@@ -175,18 +175,18 @@ in
           # script generator
           startScript = op: name: ''
             #!/usr/bin/env bash
-            echo "Performing [${op}] on Podman Containers in [${name}.service]"
+            echo "Performing ${op} on Podman Containers in ${name}.service"
             systemctl ${op} "${name}.service"
-            echo "[${op}] complete for [${name}.service]"
+            echo "${op} completed for ${name}.service"
           '';
           #
           #
           preStart = pkgs.runCommand "prestart.bash" { } ''
-            echo -e "${startScript "stop" name}" > $out
+            echo -e '${startScript "stop" name}' > $out
             chmod 0555 $out
           '';
           postStart = pkgs.runCommand "poststart.bash" { } ''
-            echo -e "${startScript "start" name}" > $out
+            echo -e '${startScript "start" name}' > $out
             chmod 0555 $out
           '';
           #
@@ -223,6 +223,30 @@ in
             };
           };
         }
+      );
+    };
+    #
+    # Polkit settings to allow the burenix backup service stop/start the podman service
+    security.polkit = mkIf (podmanix-nixops.backups.enable) {
+      enable = true;
+      extraConfig = srvMapper (
+        name: conf:
+        let
+          # root backups override
+          srvBackupOverride = conf.backups.overrides;
+          useOverride = srvBackupOverride.enable;
+          #
+          wUser = if useOverride then srvBackupOverride.user else conf.user;
+        in
+        ''
+          polkit.addRule(function(action, subject) {
+             if (action.id == "org.freedesktop.systemd1.manage-units" &&
+                 action.lookup("unit") == "${name}.service" &&
+                 subject.user == "${wUser}") {
+               return polkit.Result.YES;
+             }
+           });
+        ''
       );
     };
     #

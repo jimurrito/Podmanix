@@ -3,7 +3,7 @@
 ![Nix](https://img.shields.io/badge/language-Nix-5277C3?logo=nixos)
 ![License](https://img.shields.io/badge/license-GPL%20v3-blue)
 
-A NixOS module for declaratively managing rootless Podman containers via `podman-compose`. Podmanix handles the full lifecycle of containerized services — initialization, automatic updates, firewall rules, and encrypted backups — all driven by a single `services.podmanix` configuration block.
+A NixOS module for declaratively managing rootless Podman containers via `podman-compose`. Podmanix handles the full lifecycle of containerized services — automatic updates, firewall rules, and encrypted backups — all driven by a single `services.podmanix` configuration block.
 
 The best part is... you can bring your existing `yaml` files.
 
@@ -55,8 +55,12 @@ The best part is... you can bring your existing `yaml` files.
 
     backups = {
       enable     = true;
-      keyPath    = "<path-to-encryption-key>";
       targetDirs = [ "<path-to-backup-destination>" ];
+      backupTime = "<systemd-calendar-expression>";
+      encryption = {
+        enable  = true;
+        keyPath = "<path-to-encryption-key>";
+      };
     };
   };
 }
@@ -88,8 +92,12 @@ The best part is... you can bring your existing `yaml` files.
 
     backups = {
       enable     = true;
-      keyPath    = "/root/backup-key";
       targetDirs = [ "/mnt/backups" ];
+      backupTime = "Mon, 4:00:00";
+      encryption = {
+        enable  = true;
+        keyPath = "/root/backup-key";
+      };
     };
   };
 }
@@ -104,7 +112,7 @@ Add Podmanix to your flake inputs and wire up nixpkgs:
 ```nix
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
     podmanix = {
       url = "git+https://forgejo.immerhouse.com/jimurrito/podmanix";
@@ -145,14 +153,26 @@ One entry per containerized service, keyed by name.
 | `enable` | bool | `false` | Enable this service |
 | `user` | string | `<name>` | System user the service runs as |
 | `group` | string | `"podmanix"` | System group for the service user |
+| `extraGroups` | list of string | `[]` | Additional groups for the service user |
 | `composeFile` | path | — | Path to the `compose.yml` file |
 | `firewall.allowedTCPPorts` | list of int | `[]` | TCP ports to open in the firewall |
 | `firewall.allowedUDPPorts` | list of int | `[]` | UDP ports to open in the firewall |
 | `backups.enable` | bool | `false` | Enable backups for this service |
 | `backups.dataPaths` | list of string | `[]` | Paths to include in the backup archive |
 | `backups.tempDir` | string | `"/tmp"` | Temporary directory used during compression |
-| `backups.backupTime` | string | `"Mon, 4:00:00"` | Backup schedule (systemd calendar expression) |
-| `backups.useServiceUser` | bool | `false` | Run the backup job as the service user instead of root |
+| `backups.overrides.enable` | bool | `false` | Enable per-service backup overrides; when set, all backup settings are taken from this block instead of the global `backups` config |
+| `backups.overrides.user` | string | `<name>` | User to run the backup job as |
+| `backups.overrides.group` | string | `"podmanix"` | Group for the backup job |
+| `backups.overrides.targetDirs` | list of string | `[]` | Destination directories for backup archives |
+| `backups.overrides.tempDir` | string | `"/tmp"` | Temporary directory used during compression |
+| `backups.overrides.rollover.enable` | bool | `false` | Enable pruning of old backup archives |
+| `backups.overrides.rollover.intervalDays` | number | `14` | Days before old backups are pruned |
+| `backups.overrides.backupTime` | string\|null | `null` | Backup schedule (systemd calendar expression) |
+| `backups.overrides.useSSH` | bool | `false` | Transfer backups via SCP |
+| `backups.overrides.usePigz` | bool | `false` | Use `pigz` (multi-threaded gzip) for compression |
+| `backups.overrides.encryption.enable` | bool | `false` | Enable GPG encryption |
+| `backups.overrides.encryption.keyPath` | string\|null | `null` | Path to the GPG encryption key |
+| `backups.overrides.checksum` | bool | `false` | Enable checksum validation (sha256 or GPG) |
 
 ---
 
@@ -169,26 +189,28 @@ Controls automatic image updates across all services.
 
 ### `backups`
 
-Global backup settings shared across all per-service backup jobs.
-
-> **Note:** Backup encryption is mandatory and cannot be disabled. A valid encryption key at `keyPath` is always required when backups are enabled.
+Global backup settings shared across all per-service backup jobs. Per-service overrides can be set via `services.<name>.backups.overrides`.
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `enable` | bool | `false` | Enable the backup system |
-| `keyPath` | string | `"/root/backup-key"` | Path to the encryption key |
 | `targetDirs` | list of string | `[]` | Destination directories for backup archives |
-| `rolloverIntervalDays` | number | `14` | Days before old backups are pruned |
+| `tempDir` | string | `"/tmp"` | Temporary directory used during compression |
+| `rollover.enable` | bool | `false` | Enable pruning of old backup archives |
+| `rollover.intervalDays` | number | `14` | Days before old backups are pruned |
+| `backupTime` | string\|null | `null` | Backup schedule (systemd calendar expression); `null` disables the timer |
 | `useSSH` | bool | `false` | Transfer backups via SCP |
 | `usePigz` | bool | `false` | Use `pigz` (multi-threaded gzip) for compression |
+| `encryption.enable` | bool | `false` | Enable GPG encryption |
+| `encryption.keyPath` | string\|null | `null` | Path to the GPG encryption key |
+| `checksum` | bool | `false` | Enable checksum validation (sha256 for plain archives, GPG for encrypted) |
 
 ## How It Works
 
-1. **Rebuild** — NixOS creates system users, copies compose files to `/etc/podmanix/compose/`, and generates systemd units for each service.
-2. **Init** — Before each service starts, `podman info` is run as the service user to bootstrap the rootless Podman environment.
-3. **Run** — Each service runs `podman-compose up` and restarts automatically on failure.
-4. **Update** — A systemd timer pulls new images and restarts the service on the configured schedule, then prunes unused resources.
-5. **Backup** — A [Burenix](https://github.com/jimurrito/burenix)-managed timer stops the service, compresses and encrypts the configured data paths, transfers them to the target destination(s), then restarts the service.
+1. **Rebuild** — NixOS creates system users, installs setuid wrappers for rootless namespace mapping, and generates systemd units for each service.
+2. **Run** — Each service runs `podman-compose up` as the service user (using the compose file path from the Nix store) and restarts automatically on failure.
+3. **Update** — A systemd timer pulls new images and restarts the service on the configured schedule, then prunes unused resources.
+4. **Backup** — A [Burenix](https://github.com/jimurrito/burenix)-managed timer stops the service, compresses and optionally encrypts the configured data paths, transfers them to the target destination(s), then restarts the service.
 
 ## User & Directory Layout
 
@@ -198,7 +220,7 @@ Each service gets a dedicated system user with:
 - Subuid/subgid range `100000–165535` (required for rootless Podman)
 - Lingering enabled so the user's systemd session persists after logout
 
-Services configured with `user = "root"` skip user creation and rootless init entirely — the service runs with full root privileges. This is not recommended unless required.
+Services configured with `user = "root"` skip user creation and rootless setup entirely — the service runs with full root privileges. This is not recommended unless required.
 
 ## License
 
